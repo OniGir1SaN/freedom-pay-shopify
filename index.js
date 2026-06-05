@@ -100,6 +100,22 @@ async function confirmShopifyOrder(orderId, paymentId) {
     }
 }
 
+app.get('/auth/callback', async (req, res) => {
+      const { code, shop } = req.query;
+      if (!code) return res.status(400).send('No code provided');
+      try {
+              const tokenRes = await axios.post(`https://${shop || 'aikill.myshopify.com'}/admin/oauth/access_token`, {
+                        client_id: process.env.SHOPIFY_API_KEY,
+                        client_secret: process.env.SHOPIFY_API_SECRET,
+                        code
+              });
+              const token = tokenRes.data.access_token;
+              console.log('ACCESS TOKEN:', token);
+              res.send(`<h2>Access Token obtained!</h2><p>Copy this token and save it as SHOPIFY_ACCESS_TOKEN in Vercel:</p><pre style="background:#f0f0f0;padding:20px;font-size:16px">${token}</pre><p>Also set SHOPIFY_API_SECRET in Vercel env variables.</p>`);
+      } catch (err) {
+              res.status(500).send('Error: ' + err.message + ' | ' + JSON.stringify(err.response && err.response.data));
+      }
+});
 app.get('/', (req, res) => res.json({ status: 'Freedom Pay server running', merchant_id: FREEDOM_MERCHANT_ID }));
 
 const PORT = process.env.PORT || 3000;
